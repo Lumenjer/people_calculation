@@ -3,6 +3,9 @@ from tkinter import *
 def click():
     people.delete(0, END)
 
+
+
+
 Window = Tk()
 Window.title("Window")
 Window.geometry("500x500")
