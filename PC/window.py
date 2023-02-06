@@ -31,6 +31,7 @@ def click_refresh():
 Window = Tk()
 Window.title("Window")
 Window.geometry("500x500")
+Window.configure(bg="#c0d6e4")
 Window.resizable(0,0)
 
 my_list = ttk.Combobox(Window, font='Arial 11',width=15, height=5, value = [1, 2])
