@@ -1,84 +1,38 @@
 import serial
-import socket 
 from time import sleep
 
-def xor(a, b):
- 
-   
-    result = []
- 
-    
-    for i in range(1, len(b)):
-        if a[i] == b[i]:
-            result.append('0')
-        else:
-            result.append('1')
- 
-    return ''.join(result)
- 
- 
+port = 'COM1'
+ser = serial.Serial(port, 9600, timeout=1)
+UART_BUFF_SIZE = 64
 
-def mod2div(dividend, divisor):
- 
-   
-    pick = len(divisor)
- 
-   
-    tmp = dividend[0 : pick]
- 
-    while pick < len(dividend):
- 
-        if tmp[0] == '1':
- 
-            
-            tmp = xor(divisor, tmp) + dividend[pick]
- 
-        else: 
- 
-          
-            tmp = xor('0'*pick, tmp) + dividend[pick]
- 
-      
-        pick += 1
- 
-   
-    if tmp[0] == '1':
-        tmp = xor(divisor, tmp)
-    else:
-        tmp = xor('0'*pick, tmp)
- 
-    checkword = tmp
-    return checkword
- 
+def calcCRC8(byte_arr):
+    result = 0
+    for byte in byte_arr:
+        result ^= byte
+    return result
 
-def encodeData(data, key):
- 
-    l_key = len(key)
- 
-   
-    appended_data = data + '0'*(l_key-1)
-    remainder = mod2div(appended_data, key)
- 
-    
-    codeword = data + remainder
-    return codeword   
-     
-  
- 
+def transmit(byte_arr):
+    data = [byte for byte in byte_arr]
+    crc8 = calcCRC8(byte_arr)
+    data.append(crc8)
+    ser.write(data)
+    print(data)
 
-port = 'COM1'       
-ser = serial.Serial(port, 9600)
+def receive():
+    data = [byte for byte in ser.read(UART_BUFF_SIZE)]
+    crc8 = calcCRC8(data[:-1])
+    if data[-1] != crc8:
+        print('RECEIVE ERROR: Wrong CRC')
+        return 0
+    return data
+
 
 input_string = input("Enter data you want to send->")
-data =(''.join(format(ord(x), 'b') for x in input_string))
-print("Entered data in binary format :",data)
-key = "1001"
- 
-ans = encodeData(data,key)
-print("Encoded data to be sent to server in binary format :",ans)
-ser.write(ans.encode())
- 
+data = [int(x) for x in input_string]
+print("Entered data in binary format :", data)
 
-print("Received feedback from server :",ser.read(1024))
+transmit(data)
+
+print("Received feedback from server :", receive())
 
 ser.close()
